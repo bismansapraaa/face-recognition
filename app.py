@@ -241,4 +241,4 @@ if __name__ == "__main__":
     print("Loading AI models, one moment...")
     print("Emotion model: HSEmotion (accurate)" if HS else f"Emotion model: DeepFace basic ({HS_ERROR})")
     warm_up()
-    app.run(debug=False, port=5001)
+    app.run(host="0.0.0.0", debug=False, port=int(os.environ.get("PORT", 5001)))

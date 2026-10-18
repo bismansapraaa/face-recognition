@@ -4,3 +4,4 @@ tf-keras
 opencv-python
 numpy
 yt-dlp
+hsemotion-onnx
