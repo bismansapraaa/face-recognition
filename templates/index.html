@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mood Lens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f6; --ink:#1b2140; --muted:#5f6784; --card:#fff; --line:#d9deea; --accent:#3b4cca;
+  --happy:#f2b134; --sad:#4f7cd9; --angry:#e0483e; --neutral:#8a93a6; --surprise:#9b6bd6; --fear:#2fa79b; --disgust:#8ba03a;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.alt{width:100%;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px;font:500 .95rem inherit;font-family:inherit;cursor:pointer;margin:-4px 0 16px}
+.alt:hover{border-color:var(--accent)}
+.txt,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font:inherit;margin-bottom:16px;background:var(--card);color:var(--ink)}
+select{width:auto;margin:0;padding:6px}
+.chip{cursor:pointer}
+.faces{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.faces figure{margin:0;border:3px solid;border-radius:10px;overflow:hidden;background:var(--bg)}
+.faces img{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.faces figcaption{padding:4px 7px;font-size:.82rem;line-height:1.35}
+.faces small{display:block;color:var(--muted)}
+#cam{position:fixed;inset:0;background:rgba(27,33,64,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10;padding:20px}
+#cam video{max-width:min(640px,100%);border-radius:12px;transform:scaleX(-1)}
+#cam div{display:flex;gap:10px}
+#cam button{border:0;border-radius:10px;padding:12px 22px;font:600 1rem inherit;font-family:inherit;cursor:pointer}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 "Instrument Sans",system-ui,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:40px 20px 80px}
+h1{font:800 clamp(2.4rem,6vw,4.2rem)/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.03em;margin:0 0 14px}
+h2{font:700 1.15rem "Bricolage Grotesque",sans-serif;margin:0 0 12px}
+.lead{max-width:56ch;color:var(--muted);margin:0 0 26px}
+.strip{display:flex;height:14px;border-radius:7px;overflow:hidden;margin-bottom:44px}
+.strip i{flex:1}
+.grid{display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+.tabs{display:flex;gap:6px;background:var(--bg);padding:4px;border-radius:10px;margin-bottom:18px}
+.tabs button{flex:1;border:0;background:none;padding:9px;border-radius:7px;font:600 .95rem inherit;font-family:inherit;color:var(--muted);cursor:pointer}
+.tabs button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(27,33,64,.15)}
+.drop{display:block;border:2px dashed var(--line);border-radius:12px;padding:22px 14px;text-align:center;color:var(--muted);cursor:pointer;margin-bottom:16px}
+.drop:hover,.drop:focus-within{border-color:var(--accent);color:var(--ink)}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.drop b{display:block;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 16px}
+.chip{background:var(--bg);border-radius:20px;padding:3px 11px;font-size:.85rem}
+.row{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:.92rem;color:var(--muted)}
+.row input{width:64px;padding:6px;border:1px solid var(--line);border-radius:7px;font:inherit}
+.go{width:100%;border:0;border-radius:10px;background:var(--accent);color:#fff;padding:13px;font:600 1rem inherit;font-family:inherit;cursor:pointer}
+.go:hover{background:#2f3eb0} .go:disabled{opacity:.6;cursor:wait}
+:focus-visible{outline:3px solid #8e9bff;outline-offset:2px}
+.hint{font-size:.85rem;color:var(--muted);margin:10px 0 0}
+.empty{color:var(--muted)}
+.err{color:#b3261e;font-weight:500}
+.bar{display:grid;grid-template-columns:86px 1fr 40px;align-items:center;gap:10px;margin:8px 0}
+.bar .t{height:12px;background:var(--bg);border-radius:6px;overflow:hidden}
+.bar .t i{display:block;height:100%;border-radius:6px;transition:width .6s}
+.bar span:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.img{width:100%;border-radius:10px;margin-bottom:18px}
+.sec{margin-top:26px}
+.person{border-top:1px solid var(--line);padding:14px 0}
+.person b{font:700 1.05rem "Bricolage Grotesque",sans-serif}
+.person small{color:var(--muted);margin-left:6px}
+.mini{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:8px 0 6px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.88rem;color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.kpi{display:flex;gap:28px;margin-bottom:6px}
+.kpi div{font-size:.88rem;color:var(--muted)} .kpi strong{display:block;font:800 2rem "Bricolage Grotesque",sans-serif;color:var(--ink)}
+.note{background:#fff6e0;border-radius:8px;padding:8px 12px;font-size:.9rem;margin-top:12px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-right-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none}.bar .t i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Mood Lens</h1>
+  <p class="lead">Upload a photo or a video. See how many people looked happy, sad, angry or neutral, and add photos of specific people to follow each person’s mood.</p>
+  <div class="strip" aria-hidden="true"><i style="background:var(--happy)"></i><i style="background:var(--surprise)"></i><i style="background:var(--neutral)"></i><i style="background:var(--sad)"></i><i style="background:var(--fear)"></i><i style="background:var(--disgust)"></i><i style="background:var(--angry)"></i></div>
+ 
+  <div class="grid">
+    <section class="card">
+      <div class="tabs" role="tablist">
+        <button class="on" id="tabPhoto" role="tab">Photo</button>
+        <button id="tabVideo" role="tab">Video</button>
+        <button id="tabYt" role="tab">YouTube</button>
+      </div>
+      <label class="drop" id="mediaDrop"><input type="file" id="media" accept="image/*"><b id="mediaTitle">Choose a photo</b><span id="mediaName">JPG, PNG or WebP</span></label>
+      <button type="button" class="alt" id="snap">Take a photo with your camera</button>
+      <input type="url" id="ytUrl" class="txt" placeholder="Paste a YouTube link" hidden>
+      <label class="drop"><input type="file" id="known" accept="image/*" multiple><b>Add people to recognize (optional)</b><span>One clear face photo each. The file name becomes the person’s name, like Sara.jpg</span></label>
+      <button type="button" class="alt" id="snapKnown">Take a photo of a person with your camera</button>
+      <div class="chips" id="chips"></div>
+      <div class="row" id="everyRow" hidden>Check one frame every <input type="number" id="every" value="2" min="0.2" step="0.2"> seconds</div>
+      <div class="row">Speed <select id="det"><option value="accurate">Accurate</option><option value="fast">Fast (less accurate)</option></select></div>
+      <button class="go" id="go">Analyze</button>
+      <p class="hint">Runs on your computer. Nothing is uploaded to the internet. The first run downloads the AI models and is slower.</p>
+    </section>
+ 
+    <section class="card" id="out" aria-live="polite">
+      <p class="empty">Results appear here. Start by choosing a photo or video.</p>
+    </section>
+  </div>
+</div>
+ 
+<div id="cam" hidden>
+  <video id="camVideo" autoplay playsinline muted></video>
+  <div><button id="camShot" style="background:#fff;color:#1b2140">Take photo</button><button id="camCancel" style="background:transparent;color:#fff;border:1px solid #fff">Cancel</button></div>
+</div>
+<script>
+const COLORS={happy:'--happy',sad:'--sad',angry:'--angry',neutral:'--neutral',surprise:'--surprise',fear:'--fear',disgust:'--disgust'};
+const ORDER=Object.keys(COLORS);
+const $=id=>document.getElementById(id);
+const col=e=>`var(${COLORS[e]})`;
+let mode='photo',captured=null,knownFiles=[],stream=null,camDone=null;
+const nameOf=f=>f.name.replace(/\.[^.]+$/,'');
+function setMode(m){
+  mode=m;captured=null;
+  $('tabPhoto').classList.toggle('on',m==='photo');
+  $('tabVideo').classList.toggle('on',m==='video');
+  $('tabYt').classList.toggle('on',m==='youtube');
+  $('mediaDrop').hidden=m==='youtube';
+  $('ytUrl').hidden=m!=='youtube';
+  $('snap').hidden=m!=='photo';
+  $('media').accept=m==='photo'?'image/*':'video/*';
+  $('media').value='';
+  $('mediaTitle').textContent=m==='photo'?'Choose a photo':'Choose a video';
+  $('mediaName').textContent=m==='photo'?'JPG, PNG or WebP':'MP4, MOV or AVI';
+  $('everyRow').hidden=m==='photo';
+}
+$('tabPhoto').onclick=()=>setMode('photo');
+$('tabVideo').onclick=()=>setMode('video');
+$('tabYt').onclick=()=>setMode('youtube');
+$('media').onchange=e=>{captured=null;const f=e.target.files[0];if(f)$('mediaName').textContent=f.name};
+function showChips(){
+  $('chips').innerHTML=knownFiles.map((f,i)=>`<span class="chip" data-i="${i}" title="Click to remove">${esc(nameOf(f))} ×</span>`).join('');
+}
+$('chips').onclick=e=>{const i=e.target.dataset.i;if(i!==undefined){knownFiles.splice(i,1);showChips()}};
+$('known').onchange=e=>{knownFiles.push(...e.target.files);e.target.value='';showChips()};
+ 
+async function openCam(cb){
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}})}
+  catch(e){alert('Camera is blocked. Allow camera access for this site in the browser address bar, then try again.');return}
+  $('camVideo').srcObject=stream;$('cam').hidden=false;camDone=cb;
+}
+function closeCam(){if(stream)stream.getTracks().forEach(t=>t.stop());$('cam').hidden=true}
+$('camCancel').onclick=closeCam;
+$('camShot').onclick=()=>{
+  const v=$('camVideo'),c=document.createElement('canvas');
+  c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
+  c.toBlob(b=>{closeCam();camDone(b)},'image/jpeg',.92);
+};
+$('snap').onclick=()=>openCam(b=>{captured=b;$('media').value='';$('mediaName').textContent='Camera photo ready. Click Analyze.'});
+$('snapKnown').onclick=()=>openCam(b=>{
+  const n=(prompt('Whose face is this? Type a name.')||'').trim().replace(/[^\w \-]/g,'');
+  if(!n)return;
+  knownFiles.push(new File([b],n+'.jpg',{type:'image/jpeg'}));showChips();
+});
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+ 
+function bars(counts,total){
+  const rows=ORDER.filter(e=>counts[e]).map(e=>{
+    const n=counts[e],pct=total?Math.round(100*n/total):0;
+    return `<div class="bar"><span>${e}</span><span class="t"><i style="width:${pct}%;background:${col(e)}"></i></span><span>${n}</span></div>`;
+  });
+  return rows.join('')||'<p class="empty">No faces found.</p>';
+}
+function mini(emos){
+  const seg=Object.entries(emos).map(([e,p])=>`<i style="width:${p}%;background:${col(e)}"></i>`).join('');
+  const lg=Object.entries(emos).map(([e,p])=>`<span><span class="dot" style="background:${col(e)}"></span>${e} ${p}%</span>`).join('');
+  return `<div class="mini">${seg}</div><div class="legend">${lg}</div>`;
+}
+ 
+function render(d){
+  const sum=o=>Object.values(o).reduce((a,b)=>a+b,0);
+  let h='';
+  if(d.kind==='photo'){
+    h+=`<img class="img" src="${d.image}" alt="Photo with detected faces labeled by emotion">`;
+    h+=`<div class="kpi"><div><strong>${d.total}</strong>people found</div></div>`;
+    h+=`<div class="sec"><h2>Emotion count</h2>${bars(d.counts,d.total)}</div>`;
+    if(d.faces.length) h+=`<div class="sec"><h2>Each person</h2>`+d.faces.map(f=>`<div class="bar" style="grid-template-columns:1fr auto"><span>${esc(f.label)}</span><span><span class="dot" style="background:${col(f.emotion)}"></span>${f.emotion}</span></div>`).join('')+`</div>`;
+  }else{
+    const t=sum(d.counts);
+    if(d.title)h+=`<p class="empty">${esc(d.title)}</p>`;
+    h+=`<div class="kpi"><div><strong>${d.frames}</strong>frames checked</div><div><strong>${t}</strong>face detections</div></div>`;
+    h+=`<div class="sec"><h2>Total emotion detections</h2>${bars(d.counts,t)}</div>`;
+    h+=`<div class="sec"><h2>Most people at once</h2>${bars(d.peak,Math.max(...Object.values(d.peak),1))}</div>`;
+    if(d.gallery&&d.gallery.length){
+      const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+      h+=`<div class="sec"><h2>Faces found</h2><div class="faces">`+d.gallery.map(g=>`<figure style="border-color:${col(g.emotion)}"><img src="${g.img}" alt="${g.emotion} face"><figcaption>${g.name?'<b>'+esc(g.name)+'</b><br>':''}${g.emotion}<small>at ${fmt(g.time)}</small></figcaption></figure>`).join('')+`</div></div>`;
+    }
+  }
+  const names=Object.keys(d.people);
+  if(names.length){
+    h+=`<div class="sec"><h2>Recognized people</h2>`+names.map(n=>`<div class="person"><b>${esc(n)}</b><small>${d.people[n].samples} detections</small>${mini(d.people[n].emotions)}</div>`).join('')+`</div>`;
+  }
+  if(d.missing.length) h+=`<p class="note">Not found: ${d.missing.map(esc).join(', ')}</p>`;
+  if(d.unreadable_refs.length) h+=`<p class="note">No face found in the reference photo for: ${d.unreadable_refs.map(esc).join(', ')}. Use a clearer, front-facing photo.</p>`;
+  $('out').innerHTML=h;
+}
+ 
+$('go').onclick=async()=>{
+  const fd=new FormData();
+  fd.append('mode',mode);fd.append('every',$('every').value);fd.append('speed',$('det').value);
+  if(mode==='youtube'){
+    const u=$('ytUrl').value.trim();
+    if(!u){$('out').innerHTML='<p class="err">Paste a YouTube link first.</p>';return}
+    fd.append('url',u);
+  }else{
+    const f=captured||$('media').files[0];
+    if(!f){$('out').innerHTML=`<p class="err">Choose or take a ${mode} first.</p>`;return}
+    fd.append('media',f,f.name||'capture.jpg');
+  }
+  knownFiles.forEach(k=>fd.append('known',k));
+  $('go').disabled=true;$('go').innerHTML='<span class="spin"></span>Analyzing…';
+  $('out').innerHTML='<p class="empty">Analyzing. YouTube links download first, so they take longer.</p>';
+  try{
+    const r=await fetch('/analyze',{method:'POST',body:fd});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Something went wrong');
+    render(d);
+  }catch(e){$('out').innerHTML=`<p class="err">${esc(e.message)}</p>`}
+  $('go').disabled=false;$('go').textContent='Analyze';
+};
+</script>
+</body>
+</html>

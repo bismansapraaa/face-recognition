@@ -1,0 +1,6 @@
+flask
+deepface
+tf-keras
+opencv-python
+numpy
+yt-dlp
